@@ -1,91 +1,37 @@
 package HTMLpackage;
 
 import javax.swing.*;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
+
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 
-import static javax.swing.JOptionPane.showMessageDialog;
-
+/**
+ * Created by Rumata on 25.04.2017.
+ */
 public class View extends JFrame implements ActionListener {
-    static View view = new View();
+    private Controller controller;
+    private JTabbedPane tabbedPane = new JTabbedPane();
+    private JTextPane htmlTextPane = new JTextPane();
+    private JEditorPane plainTextPane = new JEditorPane();
     private UndoManager undoManager = new UndoManager();
     private UndoListener undoListener = new UndoListener(undoManager);
 
-    public boolean canUndo() {
-        return undoManager.canUndo();
-    }
-
-    public boolean canRedo() {
-        return undoManager.canRedo();
-    }
-
-    public void undo() {                        // отменяет последнее действие. Реализуй его используя undoManager.
+    // конструктор
+    public View() {
         try {
-            if (view.canUndo()) {
-                undoManager.undo(); // Метод не должен кидать исключений, логируй их.
-            }
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
-            ExceptionHandler.log(e);              // Проследи, чтобы метод не кидал исключения. Их необходимо просто логировать.
+            ExceptionHandler.log(e);
         }
+
     }
 
-    public void redo() {                       // возвращает ранее отмененное действие. Реализуй его по аналогии с предыдущим пунктом.
-        try {
-            if (view.canRedo()) {
-                undoManager.redo();   // Метод не должен кидать исключений, логируй их.
-            }
-        } catch (Exception e) {
-            ExceptionHandler.log(e);              // Проследи, чтобы метод не кидал исключения. Их необходимо просто логировать.
-        }
-    }
-
-    public UndoListener getUndoListener() {
-        return undoListener;
-    }
-
-    public void resetUndo() {    //должен сбрасывать все правки в менеджере undoManager.
-        undoManager = new UndoManager();
-    }
-
-    public boolean isHtmlTabSelected() {   //если выбрана вкладка, отображающая html в панели вкладок (подсказка: ее индекс 0).
-        if (view.tabbedPane.getTabCount() == 0) ;
-        return true;
-    }
-
-    public void selectHtmlTab() {
-        if (!isHtmlTabSelected()) {
-            tabbedPane.setComponentAt(0, htmlTextPane);
-        }
-        // Выбирать html вкладку (переключаться на нее).
-        resetUndo();         // Сбрасывать все правки с помощью метода, который ты реализовал ранее.
-    }
-
-
-
-       public void update(){     // должен получать документ у контроллера и устанавливать его в панель редактирования htmlTextPane.
-           htmlTextPane.setDocument(controller.getHtmlDocument());
-       }
-
-       private JButton about = null;
-       private JOptionPane aboutOptionPane = null;
-    public void showAbout() {
-        about.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // Включение в интерфейс иконки
-               showMessageDialog(aboutOptionPane,
-                        "Здесь выводится информация о программе",
-                        "Информация", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
-
-           //должен показывать диалоговое окно с информацией о программе.
-           //Информацию придумай сам, а вот тип сообщения должен быть JOptionPane.INFORMATION_MESSAGE.
-    }
-    Controller controller = new Controller(view);
-
+    //Геттер и сеттер для контроллера
     public Controller getController() {
         return controller;
     }
@@ -93,97 +39,151 @@ public class View extends JFrame implements ActionListener {
     public void setController(Controller controller) {
         this.controller = controller;
     }
-    public void init(){
+
+    // Инициализация всего окна
+    public void init() {
         initGui();
-        FrameListener listener = new FrameListener(this);
-        view.addWindowListener(listener);
-        setVisible(true);
+        this.addWindowListener(new FrameListener(this));
+        this.setVisible(true);
+
     }
-    public void exit(){
+
+    // Инициализирует кнопки меня в окне
+    public void initMenuBar() {
+        JMenuBar jMenuBar = new JMenuBar();
+
+        MenuHelper.initFileMenu(this, jMenuBar); //file
+        MenuHelper.initEditMenu(this, jMenuBar); // edit
+        MenuHelper.initStyleMenu(this, jMenuBar); //style
+        MenuHelper.initAlignMenu(this, jMenuBar); // align
+        MenuHelper.initColorMenu(this, jMenuBar); //colorFont
+        MenuHelper.initFontMenu(this, jMenuBar); // fonts
+        MenuHelper.initHelpMenu(this, jMenuBar); //help
+
+        getContentPane().add(jMenuBar, BorderLayout.NORTH);
+
+    }
+
+    // Инициализация закладок окна. ХТМЛ/текст
+    public void initEditor() {
+        htmlTextPane.setContentType("text/html");
+
+        tabbedPane.addTab("HTML", new JScrollPane(htmlTextPane));
+
+        tabbedPane.addTab("Текст", new JScrollPane(plainTextPane));
+
+        tabbedPane.setPreferredSize(new Dimension(100, 100));
+        tabbedPane.addChangeListener(new TabbedPaneChangeListener(this));
+        this.getContentPane().add(tabbedPane, BorderLayout.CENTER);
+    }
+
+    // Инициализация всего ГУИ
+    public void initGui() {
+        initMenuBar();
+        initEditor();
+        pack();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        switch (e.getActionCommand()) {
+            case "Новый":
+                controller.createNewDocument();
+                break;
+            case "Открыть":
+                controller.openDocument();
+                break;
+            case "Сохранить":
+                controller.saveDocument();
+                break;
+            case "Сохранить как...":
+                controller.saveDocumentAs();
+                break;
+            case "Выход":
+                controller.exit();
+                break;
+            case "О программе":
+                showAbout();
+        }
+    }
+
+    // Выход  из системы, пробрасывет закрытие в контроллер
+    public void exit() {
         controller.exit();
     }
 
-    JTabbedPane tabbedPane = new JTabbedPane(); // панель с вкладками
-    JTextPane htmlTextPane = new JTextPane();  // панель для визуального редактирования html
-   JEditorPane plainTextPane = new JEditorPane(); // будет отображать код html (теги и их содержимое)
-
-    MenuHelper menuHelper = new MenuHelper();
-        @Override
-        public void actionPerformed(ActionEvent e) {  // будет вызваться при выборе пунктов меню, у которых наше представление указано в виде слушателя событий.
-            String str = e.getActionCommand(); //Получи из события команду с помощью метода. Это будет обычная строка.
-            // По этой строке ты можешь понять какой пункт меню создал данное событие.
-            try {
-                switch (str) {
-                    case "Новый":
-                        controller.createNewDocument();   //В этом пункте и далее, если необходимого метода в контроллере еще нет - создай заглушки.
-                        break;
-                    case "Открыть":
-                        controller.openDocument();
-                        break;
-                    case "Сохранить":
-                        controller.saveDocument();
-                        break;
-                    case "Сохранить как...":
-                        controller.saveDocumentAs();
-                        break;
-                    case "Выход":
-                        controller.exit();
-                        break;
-                    case "О программе":
-                        view.showAbout();
-                        break;
-                }
-            } catch (IOException ex) {
-                ExceptionHandler.log(ex);
-            }
+    public void selectedTabChanged() {
+        switch (tabbedPane.getSelectedIndex()) {
+            case 0:
+                controller.setPlainText(plainTextPane.getText());
+                break;
+            case 1:
+                plainTextPane.setText(controller.getPlainText());
+                break;
         }
-        public void initMenuBar(){  // инициализация меню
-            JMenuBar menuBar = new JMenuBar();
-            view.getContentPane().add(menuBar);
-            menuHelper.initFileMenu(view,menuBar);
-            menuHelper.initEditMenu(view,menuBar);
-            menuHelper.initFontMenu(view,menuBar);
-            menuHelper.initAlignMenu(view,menuBar);
-            menuHelper.initColorMenu(view,menuBar);
-            menuHelper.initStyleMenu(view,menuBar);
-            menuHelper.initHelpMenu(view,menuBar);
-        }
-
-    public Dimension getPreferredSize() {
-        return new Dimension(5000, 5000);
-    }
-    public void initEditor() {  // инициализация панелей редактора
-        htmlTextPane.setContentType("text/html"); // Устанавливать тип контента для компонента
-        JScrollPane htmlScrollPane = new JScrollPane(htmlTextPane); // локальный компонент прокрутки
-        tabbedPane.addTab("HTML", htmlScrollPane); // Добавляем вкладку в панель с именем "HTML" и компонентом из предыдущего пункта.
-        JScrollPane textScrollPane = new JScrollPane(plainTextPane); // новый локальный компонент на базе plainTextPane.
-        tabbedPane.addTab("Текст", textScrollPane); //Добавляем еще одну вкладку в tabbedPane с именем "Текст" и компонентом из предыдущего пункта.
-        tabbedPane.setPreferredSize(tabbedPane.getPreferredSize()); //Устанавливаем предпочтительный размер панели
-        TabbedPaneChangeListener tabbedPaneChangeListener = new TabbedPaneChangeListener(this);
-        tabbedPane.addChangeListener(tabbedPaneChangeListener); // создаем слушателя и устанавливаем его в качестве слушателя изменений в tabbedPane.
-        view.getContentPane().add(tabbedPane); // Получили панель контента текущего фрейма с помощью метода, его реализация унаследовалась от JFrame.
-        // Добавляем по центру панели контента текущего фрейма нашу панель с вкладками
-        // После запуска приложения можно будет увидеть текущие результаты: две независимые закладки (HTML и Текст), в каждой из которых можно набирать свой текст.
+        resetUndo();
     }
 
-    public void initGui(){  // будет инициализировать графический интерфейс
-        view.initMenuBar();
-        view.initEditor();
-        view.setDefaultLookAndFeelDecorated(true);
-        view.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        view.pack();   //	Позволяет «упаковать» имеющиеся в окне компоненты, так чтобы они занимали столько места, сколько им необходимо.
-        view.setVisible(true);          // Компоненты при вызове этого метода переходят в «видимое» состояние, хотя и не появляются на экране до вызова одного из следующих методов
 
-        }
-
-        public void selectedTabChanged(){    // Этот метод вызывается, когда произошла смена выбранной вкладки
-        if(tabbedPane.getSelectedIndex() == 0){    //проверить, какая вкладка сейчас оказалась выбранной.
-            // Если выбрана вкладка с индексом 0 (html вкладка), нам нужно получить текст из plainTextPane и установить его в контроллер с помощью метода setPlainText.
-            controller.setPlainText(plainTextPane.getText());
-        }
-        if(tabbedPane.getSelectedIndex() == 1){  //Если выбрана вкладка с html текстом, необходимо получить текст у контроллера с помощью метода getPlainText() и установить его в панель plainTextPane.
-            controller.setPlainText(controller.getPlainText());
-        }
-       resetUndo();    //Сбросить правки (вызвать метод  представления).
+    // Проверка возможности отменить действие
+    public boolean canUndo() {
+        return undoManager.canUndo();
     }
+
+    //Проверка возможности перейти на действие вперед
+    public boolean canRedo() {
+        return undoManager.canRedo();
+    }
+
+    //отменяет последнее действие
+    public void undo() {
+        try {
+            undoManager.undo();
+        } catch (CannotUndoException e) {
+            ExceptionHandler.log(e);
+        }
+    }
+
+    //возвращает ранее отмененное действие
+    public void redo() {
+        try {
+            undoManager.redo();
+        } catch (CannotRedoException e) {
+            ExceptionHandler.log(e);
+        }
+    }
+
+    // геттер для слушателя изменений
+    public UndoListener getUndoListener() {
+        return undoListener;
+    }
+
+    //должен сбрасывать все правки в менеджере
+    public void resetUndo() {
+        undoManager.discardAllEdits();
+    }
+
+    //должен возвращать true, если выбрана вкладка, отображающая html в панели вкладок
+    public boolean isHtmlTabSelected() {
+        return tabbedPane.getSelectedIndex() == 0;
+    }
+
+    // Выбирать html вкладку
+    public void selectHtmlTab() {
+        tabbedPane.setSelectedIndex(0);
+        resetUndo();
+
+    }
+
+    // обновляет html страницу
+    public void update() {
+        htmlTextPane.setDocument(controller.getDocument());
+    }
+
+    // "О программе"
+    public void showAbout() {
+        JOptionPane.showMessageDialog(getContentPane(), "It hard to be God", "Information", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+
 }

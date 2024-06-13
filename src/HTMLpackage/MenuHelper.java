@@ -7,76 +7,47 @@ import javax.swing.text.StyledEditorKit;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
-public class MenuHelper {   //вспомогательный класс для инициализации и настройки меню
-    private JMenu jMenu;
-    private JMenuItem jMenuItem;
-    private static ActionListener actionListener;
-    public MenuHelper() {
+public class MenuHelper {
 
+    /* Создает и добавляет в родителя пункт меню
+    Параметры: родитель, Название пункта меню, слушатель для пункта
+     */
+    public static JMenuItem addMenuItem(JMenu parent, String text, ActionListener actionListener) {
+        JMenuItem menuItem = new JMenuItem(text);
+        menuItem.addActionListener(actionListener);
+        parent.add(menuItem);
+        return menuItem;
     }
 
-    //метод, где parent - меню в котором мы добавляем пункт, text -текст добавляемого пункта,
-    // actionListener - слушатель действий добавляемого пункта меню.
-    public static JMenuItem addMenuItem (JMenu parent, String text, ActionListener actionListener) {
-        JMenu newMenu = new JMenu(text);      // Создавать новый пункт меню, используя text.
-        newMenu.addActionListener(actionListener);  // Устанавливать этому пункту слушателя действий с помощью метода addActionListener().
-        parent.add(text);                     // Добавлять в parent созданный пункт меню.
-        return newMenu;                          //  Возвращать созданный пункт меню.
+    /* Создает и добавляет в родителя пункт меню
+        Параметры: родитель, Название пункта меню, Действие
+         */
+    public static JMenuItem addMenuItem(JMenu parent, String text, Action action) {
+        JMenuItem menuItem = addMenuItem(parent, action);
+        menuItem.setText(text);
+        return menuItem;
     }
 
-    public static JMenuItem addMenuItem(JMenu parent, Action action){ // в качестве параметра принимает
-                                      // действие action, которое необходимо выполнить при выборе пункта меню.
+    /* Создает и добавляет в родителя пункт меню
+        Параметры: родитель, слушатель для пункта
+        Название устанвливаеться по умолчанию
+         */
+    public static JMenuItem addMenuItem(JMenu parent, Action action) {
         JMenuItem menuItem = new JMenuItem(action);
         parent.add(menuItem);
         return menuItem;
-
-    }
-    public static JMenuItem addMenuItem(JMenu parent, String text, Action action){
-        JMenu newMenu = new JMenu(text);     //добавляет в parent новый пункт меню с текстом text и действием action.
-        parent.add(newMenu);                   // Добавлять в parent созданный пункт меню.
-        addMenuItem(newMenu, action);      // При реализации используй вызов метода из предыдущего пункта.
-        return newMenu;
     }
 
-    public static void initHelpMenu(View view, JMenuBar menuBar) { //- инициализация меню помощи.
-        view.add(menuBar);
-        JMenu help = new JMenu("Помощь");
-        menuBar.add(help);
-        help.add("О программе");
-           }
-    public static void initStyleMenu(View view, JMenuBar menuBar) { // - инициализация меню выбора шрифта.
-        view.add(menuBar);
-        JMenu styles = new JMenu("Шрифт");
-        menuBar.add(styles);
-        addMenuItem(styles,"Курсив",actionListener);
-        addMenuItem(styles,"Подчеркнутый",actionListener);
-        addMenuItem(styles,"Подстрочный знак",actionListener);
-        addMenuItem(styles,"Надстрочный знак",actionListener);
-        addMenuItem(styles,"Зачеркнутый",actionListener);
+    // Инциализация меню "Помощь"
+    public static void initHelpMenu(View view, JMenuBar menuBar) {
+        JMenu helpMenu = new JMenu("Помощь");
+        menuBar.add(helpMenu);
+
+        addMenuItem(helpMenu, "О программе", view);
     }
-    public static void initColorMenu(View view, JMenuBar menuBar) { // - инициализация меню выбора цвета.
-        JMenu color = new JMenu("Цвет");
-        menuBar.add(color);
-                //Действие для установки цвета переднего плана.
-        addMenuItem(color, new StyledEditorKit.ForegroundAction("Красный", Color.red));
-        addMenuItem(color,new StyledEditorKit.ForegroundAction("Оранжевый",Color.orange));
-        addMenuItem(color,new StyledEditorKit.ForegroundAction("Желтый",Color.yellow));
-        addMenuItem(color,new StyledEditorKit.ForegroundAction("Зеленый",Color.green));
-        addMenuItem(color,new StyledEditorKit.ForegroundAction("Синий",Color.blue));
-        addMenuItem(color,new StyledEditorKit.ForegroundAction("Голубой",Color.cyan));
-        addMenuItem(color,new StyledEditorKit.ForegroundAction("Пурпурный",Color.magenta));
-        addMenuItem(color,new StyledEditorKit.ForegroundAction("Черный",Color.black));
-        color.addMenuListener(new TextEditMenuListener(view));
-    }
-    public static void initAlignMenu(View view, JMenuBar menuBar) { // - инициализация меню выравнивания.
-        JMenu alignment = new JMenu("Выравнивание");
-        menuBar.add(alignment);
-        addMenuItem(alignment,new StyledEditorKit.AlignmentAction("По левому краю",StyleConstants.ALIGN_LEFT));
-        addMenuItem(alignment,new StyledEditorKit.AlignmentAction("По центру",StyleConstants.ALIGN_CENTER));
-        addMenuItem(alignment,new StyledEditorKit.AlignmentAction("По правому краю",StyleConstants.ALIGN_RIGHT));
-        alignment.addMenuListener(new TextEditMenuListener(view));
-    }
-    public static void initFontMenu(View view, JMenuBar menuBar) { // - инициализация меню выбора стиля текста.
+
+    // Инциализация меню "Шрифты"
+    public static void initFontMenu(View view, JMenuBar menuBar) {
         JMenu fontMenu = new JMenu("Шрифт");
         menuBar.add(fontMenu);
 
@@ -98,27 +69,78 @@ public class MenuHelper {   //вспомогательный класс для �
 
         fontMenu.addMenuListener(new TextEditMenuListener(view));
     }
-    public static void initEditMenu(View view, JMenuBar menuBar) { // - инициализация меню редактирования текста.
-        JMenu edit = new JMenu("Редактировать");
-        menuBar.add(edit);
-        addMenuItem(edit,"Отменить",new UndoAction(view));;
-        addMenuItem(edit,"Вернуть",new RedoAction(view));;
-        addMenuItem(edit,"Вырезать",new DefaultEditorKit.CutAction());
-        addMenuItem(edit,"Копировать",new DefaultEditorKit.CopyAction());
-        addMenuItem(edit,"Вставить",new DefaultEditorKit.PasteAction());
-        edit.addMenuListener(new TextEditMenuListener(view));
+
+    // Инциализация меню "Цвета"
+    public static void initColorMenu(View view, JMenuBar menuBar) {
+        JMenu colorMenu = new JMenu("Цвет");
+        menuBar.add(colorMenu);
+
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Красный", Color.red));
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Оранжевый", Color.orange));
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Желтый", Color.yellow));
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Зеленый", Color.green));
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Синий", Color.blue));
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Голубой", Color.cyan));
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Пурпурный", Color.magenta));
+        addMenuItem(colorMenu, new StyledEditorKit.ForegroundAction("Черный", Color.black));
+
+        colorMenu.addMenuListener(new TextEditMenuListener(view));
     }
-    public static void initFileMenu(View view, JMenuBar menuBar) { // - инициализация меню Файл.
-        view.add(menuBar);
-        JMenu file = new JMenu("Файл");
-        menuBar.add(file);
-        addMenuItem(file, "Новый", view);
-        addMenuItem(file, "Открыть", view);
-        addMenuItem(file, "Сохранить", view);
-        addMenuItem(file, "Сохранить как...", view);
-        file.addSeparator();
-        addMenuItem(file, "Выход", view);
+
+    // Инциализация меню "Выравнивание"
+    public static void initAlignMenu(View view, JMenuBar menuBar) {
+        JMenu alignMenu = new JMenu("Выравнивание");
+        menuBar.add(alignMenu);
+
+        addMenuItem(alignMenu, new StyledEditorKit.AlignmentAction("По левому краю", StyleConstants.ALIGN_LEFT));
+        addMenuItem(alignMenu, new StyledEditorKit.AlignmentAction("По центру", StyleConstants.ALIGN_CENTER));
+        addMenuItem(alignMenu, new StyledEditorKit.AlignmentAction("По правому краю", StyleConstants.ALIGN_RIGHT));
+
+        alignMenu.addMenuListener(new TextEditMenuListener(view));
+    }
+
+    // Инциализация меню "Стиль"
+    public static void initStyleMenu(View view, JMenuBar menuBar) {
+        JMenu styleMenu = new JMenu("Стиль");
+        menuBar.add(styleMenu);
+
+        addMenuItem(styleMenu, "Полужирный", new StyledEditorKit.BoldAction());
+        addMenuItem(styleMenu, "Подчеркнутый", new StyledEditorKit.UnderlineAction());
+        addMenuItem(styleMenu, "Курсив", new StyledEditorKit.ItalicAction());
+
+        styleMenu.addSeparator();
+
+        addMenuItem(styleMenu, "Подстрочный знак", new SubscriptAction());
+        addMenuItem(styleMenu, "Надстрочный знак", new SuperscriptAction());
+        addMenuItem(styleMenu, "Зачеркнутый", new StrikeThroughAction());
+
+        styleMenu.addMenuListener(new TextEditMenuListener(view));
+    }
+
+    // Инциализация меню "Редактировать"
+    public static void initEditMenu(View view, JMenuBar menuBar) {
+        JMenu editMenu = new JMenu("Редактировать");
+        menuBar.add(editMenu);
+
+        JMenuItem undoItem = addMenuItem(editMenu, "Отменить", new UndoAction(view));
+        JMenuItem redoItem = addMenuItem(editMenu, "Вернуть", new RedoAction(view));
+        addMenuItem(editMenu, "Вырезать", new DefaultEditorKit.CutAction());
+        addMenuItem(editMenu, "Копировать", new DefaultEditorKit.CopyAction());
+        addMenuItem(editMenu, "Вставить", new DefaultEditorKit.PasteAction());
+
+        editMenu.addMenuListener(new UndoMenuListener(view, undoItem, redoItem));
+    }
+
+    // Инциализация меню "Файл"
+    public static void initFileMenu(View view, JMenuBar menuBar) {
+        JMenu fileMenu = new JMenu("Файл");
+        menuBar.add(fileMenu);
+
+        addMenuItem(fileMenu, "Новый", view);
+        addMenuItem(fileMenu, "Открыть", view);
+        addMenuItem(fileMenu, "Сохранить", view);
+        addMenuItem(fileMenu, "Сохранить как...", view);
+        fileMenu.addSeparator();
+        addMenuItem(fileMenu, "Выход", view);
     }
 }
-
-
