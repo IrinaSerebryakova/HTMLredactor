@@ -1,7 +1,6 @@
-package actions;
+package HTMLpackage;
 
 import javax.swing.*;
-import javax.swing.text.View;
 import java.awt.event.ActionEvent;
 
 public class RedoAction extends AbstractAction {
@@ -13,6 +12,6 @@ public class RedoAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-            view.redo();
+       view.redo();
     }
 }

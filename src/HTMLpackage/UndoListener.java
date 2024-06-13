@@ -1,4 +1,4 @@
-package listeners;
+package HTMLpackage;
 
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
@@ -12,6 +12,7 @@ public class UndoListener implements UndoableEditListener {
 
     @Override
     public void undoableEditHappened(UndoableEditEvent e) {   //должен из переданного события получать правку и добавлять ее в undoManager.
-
+        undoManager.addEdit(e.getEdit());
     }
 }
+
